@@ -1,0 +1,63 @@
+name: nileshield-ai
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: nileshield-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nileshield}
+      POSTGRES_USER: ${POSTGRES_USER:-nileshield}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nileshield}
+    ports:
+      # Host port differs from 5432 to avoid clashing with local PostgreSQL installs.
+      - "${POSTGRES_PORT:-5435}:5432"
+    volumes:
+      - nileshield_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # -h 127.0.0.1 is required: during initdb the image runs a temporary
+      # socket-only server, which would otherwise report healthy too early.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-nileshield} -d ${POSTGRES_DB:-nileshield}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+    container_name: nileshield-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-nileshield}:${POSTGRES_PASSWORD:-nileshield}@db:5432/${POSTGRES_DB:-nileshield}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEBUG: ${DEBUG:-false}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+    ports:
+      - "${BACKEND_PORT:-8001}:8001"
+    volumes:
+      - ./backend:/app
+      - ./backend/alembic:/app/alembic
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: nileshield-web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      # Browser calls /api on the dev server, which proxies to the API container.
+      VITE_DEV_API_TARGET: http://backend:8001
+      VITE_DEV_PORT: 5173
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+
+volumes:
+  nileshield_pgdata:

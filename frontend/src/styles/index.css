@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    font-family: theme("fontFamily.sans");
+    background-color: theme("colors.ops.950");
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0b1220;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 2px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+  }
+}
+
+@layer components {
+  /* MapLibre chrome tuned for the dark operations theme. */
+  .maplibregl-ctrl-group {
+    background: #0b1220;
+    border: 1px solid #1e293b;
+  }
+
+  .maplibregl-ctrl-group button + button {
+    border-top: 1px solid #1e293b;
+  }
+
+  .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+    filter: invert(0.85);
+  }
+
+  .maplibregl-ctrl-attrib {
+    background: rgba(11, 18, 32, 0.85);
+    color: #64748b;
+  }
+
+  .maplibregl-ctrl-attrib a {
+    color: #94a3b8;
+  }
+
+  .maplibregl-ctrl-scale {
+    background: rgba(11, 18, 32, 0.85);
+    border-color: #334155;
+    color: #94a3b8;
+  }
+}
